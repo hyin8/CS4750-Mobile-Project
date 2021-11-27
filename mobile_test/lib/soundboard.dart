@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:flutter_sound/flutter_sound.dart';
 import 'package:mobile_test/audio_player.dart';
 import 'package:path/path.dart';
-import 'util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'sound_recorder.dart';
 
@@ -31,7 +27,7 @@ class _SoundBoardState extends State<SoundBoard>{
 
   //Style settings
   final padStyle = EdgeInsets.all(10);
-  final themeColor = Colors.lightBlue;
+  final themeColor = Colors.lightBlueAccent;
   final secondThemeColor = Colors.pinkAccent;
   final ButtonStyle flatButtonStyle = TextButton.styleFrom(
     backgroundColor: Colors.lightBlue,
@@ -74,8 +70,11 @@ class _SoundBoardState extends State<SoundBoard>{
     return DefaultTabController(
         length: 2,
         child: Scaffold(
+          extendBodyBehindAppBar: true,
           appBar: AppBar(
-            title: const Text("SoundCord"),
+            title: Center(child: Text("SoundCord")),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
             bottom: const TabBar(
               indicatorColor: Colors.white,
               //isScrollable: true,
@@ -91,10 +90,22 @@ class _SoundBoardState extends State<SoundBoard>{
               ],
             ),
           ),
-          body: TabBarView(children: [
-            buildBoard(context),
-            buildAudioRecorder()
-          ],
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  themeColor,
+                  secondThemeColor,
+                ],
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight
+              )
+            ),
+            child: TabBarView(children: [
+              buildBoard(context),
+              buildAudioRecorder()
+            ],
+            ),
           ),
         )
     );
@@ -117,7 +128,7 @@ class _SoundBoardState extends State<SoundBoard>{
             Container(
               padding: padStyle,
               decoration: BoxDecoration(
-                color:Colors.red,
+                color:Colors.transparent,
                 borderRadius: BorderRadius.circular(20)
               ),
               width: 150,
@@ -170,78 +181,90 @@ class _SoundBoardState extends State<SoundBoard>{
   }
 
   Widget buildBoard(BuildContext context) {
-    int curIndex = 0;
     return Scaffold(
-      body: ListView.builder(
-          itemCount: _files.length,
-          itemBuilder: (BuildContext context, int index){
-      return ListTile(
-        onTap: (){
-          if(!player.isPlaying){
-            curIndex = index;
-          }
-          else if(player.isPlaying & (curIndex != index)){
-            player.stopAudio();
-            return;
-          }
-          if(!player.isPlaying){
-            player.playAudio(_files[index]);
-          }
-          else if(player.isPlaying & !player.isPaused){
-            player.pauseAudio();
-          }
-          else if(player.isPlaying & player.isPaused){
-            player.resumePlayer();
-          }
-        },
-        leading: IconButton(
-          icon: Icon(Icons.cancel),
-          onPressed: (){
-            _files.removeAt(index);
-            if(player.isPlaying){
-              player.stopAudio();
-            }
-            setState(() {
-
-            });
-          },
-        ),
-        title: Container(
-          height: 50,
-          margin: EdgeInsets.only(top: 5, bottom: 5),
-          child: Row(
-            children: [
-              Container(
-                  margin: EdgeInsets.only(right:20),
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage('assets/sound.jpg'),
-                  )
-              ),
-              Flexible(
-                  child: Container(
-                    padding: padStyle,
-                    child: Text(
-                      basename(_files[index]),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-              )
-
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              themeColor,
+              secondThemeColor
             ],
-          ),
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight
+          )
         ),
-        trailing: IconButton(
-            icon: Icon(Icons.stop),
-            onPressed: (){
-                if(player.isPlaying){
-                  player.stopAudio();
-                }
+        child: ListView.builder(
+            itemCount: _files.length,
+            itemBuilder: (BuildContext context, int index){
+        return Container(
+          margin: EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: Colors.white70,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10),
+              topRight: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
+              bottomRight: Radius.circular(10)
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 5,
+                blurRadius: 7,
+                offset: Offset(0,3),
+              )
+            ]
+          ),
+          child: ListTile(
+            onTap: (){
+              player.playAudio(_files[index]);
             },
-        )
-      );
+            leading: IconButton(
+              icon: Icon(Icons.cancel),
+              onPressed: (){
+                _files.removeAt(index);
+                setState(() {
 
-      }),
+                });
+              },
+            ),
+            title: Container(
+              height: 50,
+              margin: EdgeInsets.only(top: 5, bottom: 5),
+              child: Row(
+                children: [
+                  Container(
+                      margin: EdgeInsets.only(right:20),
+                      child: CircleAvatar(
+                        backgroundImage: AssetImage('assets/sound.jpg'),
+                      )
+                  ),
+                  Flexible(
+                      child: Container(
+                        padding: padStyle,
+                        child: Text(
+                          basename(_files[index]),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                  )
+
+                ],
+              ),
+            ),
+            trailing: IconButton(
+                icon: Icon(Icons.stop),
+                onPressed: (){
+                  player.stopAudio();
+                },
+            )
+          ),
+        );
+
+        }),
+      ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: secondThemeColor,
         onPressed: () async{
           FilePickerResult? result = await FilePicker.platform.pickFiles(
             type: FileType.audio
